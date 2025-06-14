@@ -1,4 +1,3 @@
-
 import base64
 import os
 from io import BytesIO
@@ -38,7 +37,7 @@ import ImageGoNord.utility.palette_loader as pl
 from ImageGoNord.utility.ConvertUtility import ConvertUtility
 
 try:
-    from ImageGoNord.utility.model import FeatureEncoder,RecoloringDecoder
+    from ImageGoNord.utility.model import FeatureEncoder, RecoloringDecoder
 except ImportError:
     # AI feature disabled
     pass
@@ -155,11 +154,11 @@ class GoNord(object):
         Save a Pillow image to file
     """
 
-    DEFAULT_PALETTE_PATH = '../palettes/Nord/'
+    DEFAULT_PALETTE_PATH = "../palettes/Nord/"
 
-    if (os.path.exists('../palettes/Nord/') == False):
+    if os.path.exists("../palettes/Nord/") == False:
         pa = pkg_resources.open_text(nord_palette, NordPaletteFile.AURORA)
-        DEFAULT_PALETTE_PATH = os.path.dirname(nord_palette.__file__) + '/'
+        DEFAULT_PALETTE_PATH = os.path.dirname(nord_palette.__file__) + "/"
 
     PALETTE_LOOKUP_PATH = DEFAULT_PALETTE_PATH
     USE_GAUSSIAN_BLUR = False
@@ -171,7 +170,7 @@ class GoNord(object):
     EXIF_IGN = "ImageGoNord by Schroedinger Hat"
     EXIF_IGN_AI = "ImageGoNord AI by Schroedinger Hat"
 
-    PALETTE_NET_REPO_FOLDER = 'https://github.com/Schroedinger-Hat/ImageGoNord-pip/raw/main/ImageGoNord/models/PaletteNet/'
+    PALETTE_NET_REPO_FOLDER = "https://github.com/Schroedinger-Hat/ImageGoNord-pip/raw/main/ImageGoNord/models/PaletteNet/"
 
     AVAILABLE_PALETTE = []
     PALETTE_DATA = {}
@@ -205,14 +204,14 @@ class GoNord(object):
         """
         for palette_file in self.AVAILABLE_PALETTE:
             hex_colors = pl.import_palette_from_file(
-                self.PALETTE_LOOKUP_PATH + palette_file)
+                self.PALETTE_LOOKUP_PATH + palette_file
+            )
             for hex_color in hex_colors:
-                self.PALETTE_DATA[hex_color] = pl.export_tripletes_from_color(
-                    hex_color)
+                self.PALETTE_DATA[hex_color] = pl.export_tripletes_from_color(hex_color)
 
         # Delete empty lines, if they exist.
-        if self.PALETTE_DATA.get('') and len(self.PALETTE_DATA['']) == 0:
-            del self.PALETTE_DATA['']
+        if self.PALETTE_DATA.get("") and len(self.PALETTE_DATA[""]) == 0:
+            del self.PALETTE_DATA[""]
 
         return self.PALETTE_DATA
 
@@ -256,9 +255,9 @@ class GoNord(object):
             opened image
         """
         opened_image = Image.open(path)
-        if (type(opened_image.getpixel((0,0))) == int):
-            opened_image = opened_image.convert('RGB')
-        
+        if type(opened_image.getpixel((0, 0))) == int:
+            opened_image = opened_image.convert("RGB")
+
         exif = opened_image.getexif()
         exif[ExifTags.Base.ProcessingSoftware] = self.EXIF_IGN
 
@@ -373,10 +372,10 @@ class GoNord(object):
             Box's height
 
         """
-        self.AVG_BOX_DATA['w'] = w
-        self.AVG_BOX_DATA['h'] = h
+        self.AVG_BOX_DATA["w"] = w
+        self.AVG_BOX_DATA["h"] = h
 
-    def quantize_image(self, image, fill_color='2E3440', save_path=''):
+    def quantize_image(self, image, fill_color="2E3440", save_path=""):
         """
         Quantize a Pillow image by applying the available palette
 
@@ -399,18 +398,20 @@ class GoNord(object):
         while len(data_colors) < 768:
             data_colors.extend(pl.export_tripletes_from_color(fill_color))
 
-        palimage = Image.new('P', (1, 1))
+        palimage = Image.new("P", (1, 1))
         palimage.putpalette(data_colors)
         quantize_img = quantize_to_palette(image, palimage)
         exif = quantize_img.getexif()
         exif[ExifTags.Base.ProcessingSoftware] = self.EXIF_IGN
 
-        if (save_path != ''):
+        if save_path != "":
             self.save_image_to_file(quantize_img, save_path)
 
         return quantize_img
 
-    def converted_loop(self, is_rgba, pixels, original_pixels, maxRow, maxCol, minRow=0, minCol=0):
+    def converted_loop(
+        self, is_rgba, pixels, original_pixels, maxRow, maxCol, minRow=0, minCol=0
+    ):
         color_checked = {}
         for row in range(minRow, maxRow, 1):
             for col in range(minCol, maxCol, 1):
@@ -419,41 +420,57 @@ class GoNord(object):
                 except Exception:
                     continue
 
-                if (is_rgba):
-                    if (color_to_check[3] < self.TRANSPARENCY_TOLERANCE):
+                if is_rgba:
+                    if color_to_check[3] < self.TRANSPARENCY_TOLERANCE:
                         continue
 
                 if self.USE_AVG_COLOR == True:
                     # todo: improve this feature in performance
                     color_to_check = ConvertUtility.get_avg_color(
-                        pixels=original_pixels, row=row, col=col, w=self.AVG_BOX_DATA['w'], h=self.AVG_BOX_DATA['h'])
+                        pixels=original_pixels,
+                        row=row,
+                        col=col,
+                        w=self.AVG_BOX_DATA["w"],
+                        h=self.AVG_BOX_DATA["h"],
+                    )
 
                 # saving in memory every checked color to improve performance
-                key_color_checked = ','.join(str(e) for e in list(color_to_check))
-                if (key_color_checked in color_checked):
+                key_color_checked = ",".join(str(e) for e in list(color_to_check))
+                if key_color_checked in color_checked:
                     difference = color_checked[key_color_checked]
                 else:
-                    differences = [[ConvertUtility.color_difference(color_to_check, target_value), target_name]
-                                   for target_name, target_value in self.PALETTE_DATA.items()]
+                    differences = [
+                        [
+                            ConvertUtility.color_difference(
+                                color_to_check, target_value
+                            ),
+                            target_name,
+                        ]
+                        for target_name, target_value in self.PALETTE_DATA.items()
+                    ]
                     differences.sort()
                     difference = differences[0][1]
 
                 color_checked[key_color_checked] = difference
                 colors_list = self.PALETTE_DATA[difference]
-                if (is_rgba and len(colors_list) == 3):
+                if is_rgba and len(colors_list) == 3:
                     colors_list.append(color_to_check[3])
 
                 pixels[row, col] = tuple(colors_list)
         return pixels
 
     def load_and_save_models(self):
-        rd_model = requests.get(self.PALETTE_NET_REPO_FOLDER + 'RD.state_dict.pt')
-        fe_model = requests.get(self.PALETTE_NET_REPO_FOLDER + 'FE.state_dict.pt')
+        rd_model = requests.get(self.PALETTE_NET_REPO_FOLDER + "RD.state_dict.pt")
+        fe_model = requests.get(self.PALETTE_NET_REPO_FOLDER + "FE.state_dict.pt")
 
-        with open(os.path.dirname(palette_net.__file__) + '/FE.state_dict.pt', "wb") as f:
+        with open(
+            os.path.dirname(palette_net.__file__) + "/FE.state_dict.pt", "wb"
+        ) as f:
             f.write(fe_model.content)
-        
-        with open(os.path.dirname(palette_net.__file__) + '/RD.state_dict.pt', "wb") as f:
+
+        with open(
+            os.path.dirname(palette_net.__file__) + "/RD.state_dict.pt", "wb"
+        ) as f:
             f.write(rd_model.content)
 
     def convert_image_by_model(self, image, use_model_cpu=False):
@@ -472,15 +489,20 @@ class GoNord(object):
         pillow image
             processed image
         """
-        FE = FeatureEncoder() # torch.Size([64, 3, 3, 3])
-        RD = RecoloringDecoder() # torch.Size([530, 256, 3, 3])
+        FE = FeatureEncoder()  # torch.Size([64, 3, 3, 3])
+        RD = RecoloringDecoder()  # torch.Size([530, 256, 3, 3])
 
-        if (
-            os.path.exists(os.path.dirname(palette_net.__file__) + '/FE.state_dict.pt')
-            and os.path.exists(os.path.dirname(palette_net.__file__) + '/RD.state_dict.pt')
+        if os.path.exists(
+            os.path.dirname(palette_net.__file__) + "/FE.state_dict.pt"
+        ) and os.path.exists(
+            os.path.dirname(palette_net.__file__) + "/RD.state_dict.pt"
         ):
-            FE.load_state_dict(torch.load(pkg_resources.open_binary(palette_net, "FE.state_dict.pt")))
-            RD.load_state_dict(torch.load(pkg_resources.open_binary(palette_net, "RD.state_dict.pt")))
+            FE.load_state_dict(
+                torch.load(pkg_resources.open_binary(palette_net, "FE.state_dict.pt"))
+            )
+            RD.load_state_dict(
+                torch.load(pkg_resources.open_binary(palette_net, "RD.state_dict.pt"))
+            )
         else:
             self.load_and_save_models()
 
@@ -488,45 +510,58 @@ class GoNord(object):
             FE.to("cpu")
             RD.to("cpu")
 
-        lab_image = ((convertor.rgb2lab(np.array(image))) - [50,0,0] ) / [50,127,127]
+        lab_image = ((convertor.rgb2lab(np.array(image))) - [50, 0, 0]) / [50, 127, 127]
 
-        img = torch.Tensor(lab_image).permute(2,0,1)
+        img = torch.Tensor(lab_image).permute(2, 0, 1)
 
-        h = 16*int(img.shape[1]/16)
-        w = 16*int(img.shape[2]/16)
+        h = 16 * int(img.shape[1] / 16)
+        w = 16 * int(img.shape[2] / 16)
 
-        T = transforms.Resize((h,w))
+        T = transforms.Resize((h, w))
 
         img = T(img)
         img = img.unsqueeze(0)
         palette = []
         for hex, rgb_value in self.PALETTE_DATA.items():
             a = []
-            for j in [2,4,6]:
-                a.append(int(hex[j-2:j],16))
+            for j in [2, 4, 6]:
+                a.append(int(hex[j - 2 : j], 16))
             palette.append(a)
 
         try:
-            pal_np = np.array(palette).reshape(1,6,3)/255
+            pal_np = np.array(palette).reshape(1, 6, 3) / 255
         except:
             # this feature is limited to 6 colours
             # we're taking the first six
-            pal_np = np.array(palette[0:6]).reshape(1,6,3)/255
+            pal_np = np.array(palette[0:6]).reshape(1, 6, 3) / 255
 
-        pal = torch.Tensor((convertor.rgb2lab(pal_np) - [50,0,0] ) / [50,128,128]).unsqueeze(0)
+        pal = torch.Tensor(
+            (convertor.rgb2lab(pal_np) - [50, 0, 0]) / [50, 128, 128]
+        ).unsqueeze(0)
 
         image = img
         palette = pal
-        illu = image[:,0:1,:,:]
+        illu = image[:, 0:1, :, :]
 
         with torch.no_grad():
-            c1,c2,c3,c4 = FE(image)
+            c1, c2, c3, c4 = FE(image)
             out = RD(c1, c2, c3, c4, palette, illu)
-            final_image = torch.cat([(illu+1)*50, out*128],axis = 1).permute(0,2,3,1)[0]
+            final_image = torch.cat([(illu + 1) * 50, out * 128], axis=1).permute(
+                0, 2, 3, 1
+            )[0]
             # need to convert float value returning in skimage to 0-255 range values for pillow (computer vision / training lib vs pixel operation lib)
-            return Image.fromarray((convertor.lab2rgb(final_image) * 255).astype(np.uint8))
+            return Image.fromarray(
+                (convertor.lab2rgb(final_image) * 255).astype(np.uint8)
+            )
 
-    def convert_image(self, image, save_path='', use_model=False, use_model_cpu=False, parallel_threading=False):
+    def convert_image(
+        self,
+        image,
+        save_path="",
+        use_model=False,
+        use_model_cpu=False,
+        parallel_threading=False,
+    ):
         """
         Process a Pillow image by replacing pixel or by avg algorithm
 
@@ -553,7 +588,7 @@ class GoNord(object):
         original_pixels = self.load_pixel_image(original_image)
         original_image.close()
         pixels = self.load_pixel_image(image)
-        is_rgba = (image.mode == 'RGBA')
+        is_rgba = image.mode == "RGBA"
         exif = image.getexif()
         exif[ExifTags.Base.ProcessingSoftware] = self.EXIF_IGN
 
@@ -563,15 +598,27 @@ class GoNord(object):
                 exif = image.getexif()
                 exif[ExifTags.Base.ProcessingSoftware] = self.EXIF_IGN_AI
             else:
-                print('Please install the dependencies required for the AI feature: pip install image-go-nord[AI]')
+                print(
+                    "Please install the dependencies required for the AI feature: pip install image-go-nord[AI]"
+                )
         else:
             if not parallel_threading:
-                self.converted_loop(is_rgba, pixels, original_pixels, image.size[0], image.size[1])
+                self.converted_loop(
+                    is_rgba, pixels, original_pixels, image.size[0], image.size[1]
+                )
             else:
                 step = ceil(image.size[0] / self.MAX_THREADS)
                 threads = []
                 for row in range(step, image.size[0] + step, step):
-                    args = (is_rgba, pixels, original_pixels, row, image.size[1], row - step, 0)
+                    args = (
+                        is_rgba,
+                        pixels,
+                        original_pixels,
+                        row,
+                        image.size[1],
+                        row - step,
+                        0,
+                    )
                     t = threading.Thread(target=self.converted_loop, args=args)
                     t.daemon = True
                     t.start()
@@ -583,7 +630,7 @@ class GoNord(object):
         if self.USE_GAUSSIAN_BLUR:
             image = image.filter(ImageFilter.GaussianBlur(1))
 
-        if (save_path != ''):
+        if save_path != "":
             self.save_image_to_file(image, save_path)
 
         return image
@@ -602,8 +649,6 @@ class GoNord(object):
         exif = image.getexif()
         image.save(path, exif=exif)
 
-
-
     def get_video_information(self, video_path):
         """
         Get basic information about the video file
@@ -621,14 +666,17 @@ class GoNord(object):
 
         probe = ffmpeg.probe(video_path)
         video_stream = next(
-                (stream for stream in probe['streams'] if stream['codec_type'] == 'video'),
-                None)
+            (stream for stream in probe["streams"] if stream["codec_type"] == "video"),
+            None,
+        )
 
-        width = int(video_stream['width'])
-        height = int(video_stream['height'])
-        avg_frame_rate = video_stream['avg_frame_rate'].split('/')
-        framerate = int(avg_frame_rate[0]) / int(1 if avg_frame_rate[1] == 0 else avg_frame_rate[1])
-        duration = float(probe['format']['duration'])
+        width = int(video_stream["width"])
+        height = int(video_stream["height"])
+        avg_frame_rate = video_stream["avg_frame_rate"].split("/")
+        framerate = int(avg_frame_rate[0]) / int(
+            1 if avg_frame_rate[1] == 0 else avg_frame_rate[1]
+        )
+        duration = float(probe["format"]["duration"])
         total_frames = int(duration * framerate)
 
         return width, height, round(framerate, 2), duration, total_frames
@@ -660,22 +708,19 @@ class GoNord(object):
         ndarray
             The numpy array of video frames
         """
-        
+
         out, _ = (
-            ffmpeg
-            .input(video_path, ss=str(start_time), t=str(duration))
-            .output('pipe:', format='rawvideo', pix_fmt='rgb24', loglevel='quiet')
+            ffmpeg.input(video_path, ss=str(start_time), t=str(duration))
+            .output("pipe:", format="rawvideo", pix_fmt="rgb24", loglevel="quiet")
             .run(capture_stdout=True)
         )
         # Generate numpy array from stdout
-        video_np_arr = (
-            np
-            .frombuffer(out, np.uint8)
-            .reshape([-1, height, width, 3])
-        )
+        video_np_arr = np.frombuffer(out, np.uint8).reshape([-1, height, width, 3])
         return video_np_arr
 
-    def vidwrite(self, fn, cube, images, framerate, start_frame, total_frames, vcodec='libx264'):
+    def vidwrite(
+        self, fn, cube, images, framerate, start_frame, total_frames, vcodec="libx264"
+    ):
         """
         Generate video from the numpy array
 
@@ -697,23 +742,33 @@ class GoNord(object):
         None
             Convert the numpy array to video and save to disk
         """
-        
+
         # If images is a list, convert to ndarray
         if not isinstance(images, np.ndarray):
             images = np.asarray(images)
         height, width = images.shape[1:3]
         process = (
-            ffmpeg
-                .input('pipe:', format='rawvideo', pix_fmt='rgb24', r=framerate, s='{}x{}'.format(width, height))
-                .output(fn, pix_fmt='yuv420p', vcodec=vcodec, loglevel='quiet', tune='fastdecode', preset='ultrafast')
-                .overwrite_output()
-                .run_async(pipe_stdin=True)
+            ffmpeg.input(
+                "pipe:",
+                format="rawvideo",
+                pix_fmt="rgb24",
+                r=framerate,
+                s="{}x{}".format(width, height),
+            )
+            .output(
+                fn,
+                pix_fmt="yuv420p",
+                vcodec=vcodec,
+                loglevel="quiet",
+                tune="fastdecode",
+                preset="ultrafast",
+            )
+            .overwrite_output()
+            .run_async(pipe_stdin=True)
         )
         for idx, frame in enumerate(images):
             process.stdin.write(
-                ConvertUtility.convert_palette(cube, frame)
-                    .astype(np.uint8)
-                    .tobytes()
+                ConvertUtility.convert_palette(cube, frame).astype(np.uint8).tobytes()
             )
         process.stdin.close()
         process.wait()
@@ -734,19 +789,24 @@ class GoNord(object):
         None
             Concatenate two videos and save to disk
         """
-        
+
         main = ffmpeg.input(out)
-        temp = ffmpeg.input(os.path.join(save_path, f'temp_{uid}.mp4'))
+        temp = ffmpeg.input(os.path.join(save_path, f"temp_{uid}.mp4"))
         (
-            ffmpeg
-            .filter([main, temp],'concat')
-            .output(os.path.join(save_path, f'output_{uid}.mp4'), pix_fmt='rgb24', loglevel='quiet', tune='fastdecode', preset='ultrafast')
+            ffmpeg.filter([main, temp], "concat")
+            .output(
+                os.path.join(save_path, f"output_{uid}.mp4"),
+                pix_fmt="rgb24",
+                loglevel="quiet",
+                tune="fastdecode",
+                preset="ultrafast",
+            )
             .overwrite_output()
             .run(capture_stdout=True)
         )
         os.remove(out)
-        os.remove(os.path.join(save_path, f'temp_{uid}.mp4'))
-        os.rename(os.path.join(save_path, f'output_{uid}.mp4'), out)
+        os.remove(os.path.join(save_path, f"temp_{uid}.mp4"))
+        os.rename(os.path.join(save_path, f"output_{uid}.mp4"), out)
 
     def apply_original_audio(self, _input, _output):
         """
@@ -764,18 +824,27 @@ class GoNord(object):
         None
             Apply the original audio to the output video
         """
-        tmp_filename = '/tmp/' + str(uuid.uuid4())
+        tmp_filename = "/tmp/" + str(uuid.uuid4())
         shutil.copyfile(_output, tmp_filename)
         output_video_stream = ffmpeg.input(tmp_filename).video
         input_audio_stream = ffmpeg.input(_input).audio
-        (ffmpeg
-          .output(output_video_stream, input_audio_stream, _output, loglevel='quiet', tune='fastdecode', preset='ultrafast')
-          .overwrite_output()
-          .run()
+        (
+            ffmpeg.output(
+                output_video_stream,
+                input_audio_stream,
+                _output,
+                loglevel="quiet",
+                tune="fastdecode",
+                preset="ultrafast",
+            )
+            .overwrite_output()
+            .run()
         )
         os.remove(tmp_filename)
 
-    def convert_video(self, _input, palette_name, _frames_per_batch = 200, save_path = '/tmp'):
+    def convert_video(
+        self, _input, palette_name, _frames_per_batch=200, save_path="/tmp"
+    ):
         """
         Concatenate two videos
 
@@ -787,7 +856,7 @@ class GoNord(object):
             Name of palette to choose
         _frames_per_batch : int / optional
             Number of frames to keep in a batch
-            Higher number indicates more memory usage but faster execution due to lesser number of parts 
+            Higher number indicates more memory usage but faster execution due to lesser number of parts
         save_path : str
             Location where to save the output video
 
@@ -800,17 +869,21 @@ class GoNord(object):
         uid = uuid.uuid4()
         palette = list(self.PALETTE_DATA.values())
 
-        _output = os.path.join(save_path, _input.split('.')[0] + str(uid) +'_converted.mp4')
+        _output = os.path.join(
+            save_path, _input.split(".")[0] + str(uid) + "_converted.mp4"
+        )
         # run once to generate the color map file
         try:
             # for all colors (256*256*256) assign color from palette
-            precalculated = np.load(f'{palette_name}.npz')['color_cube']
+            precalculated = np.load(f"{palette_name}.npz")["color_cube"]
         except:
             pl.generate_color_map(palette, palette_name)
-            precalculated = np.load(f'{palette_name}.npz')['color_cube']
+            precalculated = np.load(f"{palette_name}.npz")["color_cube"]
 
         # Initialize variables for conversion
-        width, height, framerate, duration, total_frames = self.get_video_information(_input)
+        width, height, framerate, duration, total_frames = self.get_video_information(
+            _input
+        )
 
         frames_per_batch = _frames_per_batch
         frame_number = 0
@@ -820,17 +893,33 @@ class GoNord(object):
 
         # Process the entire video in batches of `frames_per_batch` frames
         while frame_number < total_frames:
-            np_arr = self.convert_vid_to_np_arr(_input, width, height, timestamp, batch_dur)
+            np_arr = self.convert_vid_to_np_arr(
+                _input, width, height, timestamp, batch_dur
+            )
             if os.path.exists(_output):
-                self.vidwrite(os.path.join(save_path, f'temp_{uid}.mp4'), precalculated, np_arr, framerate, frame_number, total_frames)
+                self.vidwrite(
+                    os.path.join(save_path, f"temp_{uid}.mp4"),
+                    precalculated,
+                    np_arr,
+                    framerate,
+                    frame_number,
+                    total_frames,
+                )
                 self.concat_video(uid, _output, save_path)
             else:
-                self.vidwrite(_output, precalculated, np_arr, framerate, frame_number, total_frames)
+                self.vidwrite(
+                    _output,
+                    precalculated,
+                    np_arr,
+                    framerate,
+                    frame_number,
+                    total_frames,
+                )
             if (total_frames - frame_number) < frames_per_batch:
                 frames_per_batch = total_frames - frame_number
             frame_number += frames_per_batch
             duration -= batch_dur
-            timestamp += batch_dur 
+            timestamp += batch_dur
             batch_dur = batch_dur if duration > batch_dur else duration
 
         self.apply_original_audio(_input, _output)
